@@ -16,7 +16,7 @@
   "scripts": {
     "start": "electron .",
     "build": "npm ci && electron-packager .",
-    "release": "electron-packager . --all"
+    "release": "npm ci && electron-packager . --all"
   },
   "keywords": [
     "math",
