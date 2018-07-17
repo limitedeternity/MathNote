@@ -77,7 +77,7 @@ var pageComponents = {
         <div>
           <template v-if="noteList.length > 0">
             <template v-for="(noteObject, index) in noteList">
-              <div class="card" :key="index">
+              <div class="card" :key="'note-' + index">
                 <header class="card-header">
                   <p class="card-header-title">
                     {{ noteObject.name }}
@@ -110,7 +110,7 @@ var pageComponents = {
                   <a href="#" class="card-footer-item is-medium" @click="openNote(noteObject.name, $event)">View</a>
                 </footer>
               </div>
-              <div v-if="index !== noteList.length - 1" style="display: block; clear: both; height: 15px;"></div>
+              <div v-if="index !== noteList.length - 1" :key="'delimiter-' + index" style="display: block; clear: both; height: 15px;"></div>
             </template>
           </template>
           <template v-else>
