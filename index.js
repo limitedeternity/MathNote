@@ -21,5 +21,4 @@ app.on('ready', async () => {
 
 ipcMain.on('close-main-window', (event) => {
     app.quit();
-    process.exit(0);
 });
