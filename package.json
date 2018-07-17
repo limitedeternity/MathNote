@@ -1,0 +1,26 @@
+{
+  "name": "mathnote",
+  "version": "1.0.0",
+  "description": "Math notebook written using Electron.js",
+  "main": "index.js",
+  "dependencies": {
+    "firstline": "^2.0.2",
+    "glob": "^7.1.2",
+    "markdown": "^0.5.0",
+    "node-watch": "^0.5.8"
+  },
+  "devDependencies": {
+    "electron": "^3.0.0-beta.2",
+    "electron-packager": "^12.1.0"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build": "npm ci && electron-packager ."
+  },
+  "keywords": [
+    "math",
+    "notes"
+  ],
+  "author": "Marise Hayashi <@limitedeternity> (https://limitedeternity.github.io/)",
+  "license": "MIT"
+}

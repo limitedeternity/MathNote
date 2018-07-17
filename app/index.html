@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>MathNote</title>
+
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.min.css" onload="this.rel='stylesheet';this.removeAttribute('as')">
+    <link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/katex@0.10.0-beta/dist/katex.min.css" onload="this.rel='stylesheet';this.removeAttribute('as')">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0-beta/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0-beta/dist/contrib/auto-render.min.js"></script>
+    <script src="https://unpkg.com/when-dom-ready"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/vue-router@3.0.1/dist/vue-router.min.js"></script>
+    <script src="https://unpkg.com/vuex@3.0.1/dist/vuex.min.js"></script>
+  </head>
+  <body>
+    <div id="app" style="display: flex; min-height: 100vh; flex-direction: column;">
+      <header class="hero is-primary is-medium">
+        <div class="hero-body">
+          <div class="container has-text-centered">
+            <p class="title">
+              MathNote
+            </p>
+            <p class="subtitle">
+              Math conspects made easy
+            </p>
+          </div>
+        </div>
+
+        <div class="hero-foot">
+          <nav class="tabs is-boxed is-fullwidth">
+            <div class="container">
+              <ul>
+                <li class="is-active">
+                  <router-link id="notesLink" :to="{name: 'notes'}" replace>Notes</router-link>
+                </li>
+                <li>
+                  <router-link id="shortcutsLink" :to="{name: 'shortcuts'}" replace>Shortcuts</router-link>
+                </li>
+                <li>
+                  <router-link id="infoLink" :to="{name: 'info'}" replace>Info</router-link>
+                </li>
+              </ul>
+            </div>
+          </nav>
+        </div>
+      </header>
+
+      <main class="container is-fluid" style="margin: 1.2em; flex: 1;">
+        <keep-alive>
+          <router-view></router-view>
+        </keep-alive>
+      </main>
+
+      <footer class="footer hero is-primary is-medium">
+        <div class="content has-text-centered">
+          <p>
+            <strong>MathNote</strong> made with ❤ by <strong>@limitedeternity</strong>. <br> MIT License. <br><br> &copy; 2018.
+          </p>
+        </div>
+      </footer>
+    </div>
+
+    <script src="js/main.js"></script>
+  </body>
+</html>
