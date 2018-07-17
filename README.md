@@ -7,7 +7,7 @@ MathNote is an Electron-based application for displaying notes written in *Markd
 
 ## Getting started:
 
-1) Check out [Releases](https://github.com/limitedeternity/MathNote/releases) and download package corresponding your OS and arch.
+1) Check out [Releases](https://github.com/limitedeternity/MathNote/releases) and download package corresponding to your OS and architecture.
 
 2) Click `Info` tab in MathNote.
 
