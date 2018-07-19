@@ -8,7 +8,7 @@ app.on('ready', async () => {
     window = new BrowserWindow({
         height: 720,
         width: 1280,
-        resizable: false,
+        resizable: true,
         transparent: true
     });
 
