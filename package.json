@@ -1,5 +1,5 @@
 {
-  "name": "mathnote",
+  "name": "MathNote",
   "version": "1.0.0",
   "description": "Math notebook written using Electron.js",
   "main": "index.js",
@@ -15,8 +15,10 @@
   },
   "scripts": {
     "start": "electron .",
-    "build": "npm ci && electron-packager .",
-    "release": "npm ci && electron-packager . --all"
+    "build-mac": "electron-packager . MathNote --overwrite --platform=darwin --arch=x64 --icon=logo/icon.icns --prune=true --out=release-builds",
+    "build-win": "electron-packager . MathNote --overwrite --platform=win32 --arch=x64 --icon=logo/icon.ico --prune=true --out=release-builds",
+    "build-linux": "electron-packager . MathNote --overwrite --platform=linux --arch=x64 --icon=logo/icon.png --prune=true --out=release-builds",
+    "release": "npm ci && npm run build-mac && npm run build-win && npm run build-linux"
   },
   "keywords": [
     "math",
