@@ -1,4 +1,5 @@
-# MathNote
+<p align="center"><img src="logo/logotype_verticalv2.png" alt="MathNote" height="200px"></p>
+
 > Math conspects made easy
 
 MathNote is an Electron-based application for displaying notes written in *Markdown* which supports *LaTeX* expressions for embedding math formulas.
