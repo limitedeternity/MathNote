@@ -2,7 +2,13 @@
 
 > Math conspects made easy
 
+<br>
+
 MathNote is an Electron-based application for displaying notes written in *Markdown* which supports *LaTeX* expressions for embedding math formulas.
+
+<br>
+
+## Screenshot
 
 ![Screenshot](http://i104.fastpic.ru/big/2018/0717/03/9525e68d0bfeb9be3fea7cbad5957203.png)
 
@@ -19,6 +25,8 @@ MathNote is an Electron-based application for displaying notes written in *Markd
 2) Copy `notes` and `shortcuts` folders to a generated directory
 
 ## Meta
+
+> Logo is designed by [@psikoz](https://github.com/psikoz)
 
 Marise Hayashi – [Other projects](https://limitedeternity.github.io/)
 
