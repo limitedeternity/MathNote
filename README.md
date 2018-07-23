@@ -22,7 +22,7 @@ It also has *shortcuts* functionality: you can create special variables for very
 
 ## Building from source:
 
-1) `npm run build`
+1) `npm run build-{mac|linux|win}`
 
 2) Copy `notes` and `shortcuts` folders to a generated directory
 
