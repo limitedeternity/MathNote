@@ -6,8 +6,15 @@ const watch = require("node-watch");
 const markdown = require("markdown").markdown;
 const firstline = require("firstline");
 
-var dataStored = false;
-var store = new Vuex.Store({
+const dataStored = false;
+const cwd =
+  process.env.ELECTRON_ENV === "development"
+    ? app.getAppPath()
+    : process.platform === "darwin"
+    ? path.join(path.dirname(app.getPath("exe")), "..", "..", "..")
+    : path.dirname(app.getPath("exe"));
+
+const store = new Vuex.Store({
   state: {
     noteList: [],
     shortcutsList: []
@@ -20,31 +27,25 @@ var store = new Vuex.Store({
     async readAssets(state) {
       if (!dataStored) {
         let { noteNames } = await new Promise(resolve => {
-          glob(
-            path.join(app.getAppPath(), "notes", "*.md"),
-            (err, notePaths) => {
-              if (err) throw err;
+          glob(path.join(cwd, "notes", "*.md"), (err, notePaths) => {
+            if (err) throw err;
 
-              let noteNames = notePaths.map(notePath =>
-                path.basename(notePath, path.extname(notePath))
-              );
-              resolve({ noteNames });
-            }
-          );
+            let noteNames = notePaths.map(notePath =>
+              path.basename(notePath, path.extname(notePath))
+            );
+            resolve({ noteNames });
+          });
         });
 
         let { shortcutNames } = await new Promise(resolve => {
-          glob(
-            path.join(app.getAppPath(), "shortcuts", "*.js"),
-            (err, shortcutPaths) => {
-              if (err) throw err;
+          glob(path.join(cwd, "shortcuts", "*.js"), (err, shortcutPaths) => {
+            if (err) throw err;
 
-              let shortcutNames = shortcutPaths.map(shortcutPath =>
-                path.basename(shortcutPath, path.extname(shortcutPath))
-              );
-              resolve({ shortcutNames });
-            }
-          );
+            let shortcutNames = shortcutPaths.map(shortcutPath =>
+              path.basename(shortcutPath, path.extname(shortcutPath))
+            );
+            resolve({ shortcutNames });
+          });
         });
 
         let shortcutsList = [];
@@ -59,7 +60,7 @@ var store = new Vuex.Store({
         let noteList = [];
         noteNames.forEach(async noteName => {
           let noteDescription = await firstline(
-            path.join(app.getAppPath(), "notes", `${noteName}.md`),
+            path.join(cwd, "notes", `${noteName}.md`),
             {
               encoding: "utf8"
             }
@@ -87,7 +88,7 @@ var store = new Vuex.Store({
   }
 });
 
-var pageComponents = {
+const pageComponents = {
   notesComponent: {
     template: `
         <div>
@@ -154,17 +155,18 @@ var pageComponents = {
     },
     methods: {
       mountWatcher() {
-        watch(["notes", "shortcuts"], { recursive: true }, async () => {
-          dataStored = false;
-          await this.$store.dispatch("readAssets");
-        });
+        watch(
+          [path.join(cwd, "notes"), path.join(cwd, "shortcuts")],
+          { recursive: true },
+          async () => {
+            dataStored = false;
+            await this.$store.dispatch("readAssets");
+          }
+        );
       },
       openNote(noteName, event) {
         let noteContents = fs
-          .readFileSync(
-            path.join(app.getAppPath(), "notes", `${noteName}.md`),
-            "utf8"
-          )
+          .readFileSync(path.join(cwd, "notes", `${noteName}.md`), "utf8")
           .toString("utf8");
 
         let noteContentsWithMath = noteContents.replace(
@@ -178,11 +180,7 @@ var pageComponents = {
             );
 
             if (shortcutExists) {
-              return require(path.join(
-                app.getAppPath(),
-                "shortcuts",
-                `${shortcutName}.js`
-              ));
+              return require(path.join(cwd, "shortcuts", `${shortcutName}.js`));
             } else {
               return "undefined";
             }
@@ -214,18 +212,17 @@ var pageComponents = {
       },
       printNote(event) {
         let noteRoot = event.currentTarget.parentNode.parentNode;
-        noteRoot.querySelector("section").style = "display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0; overflow: auto; page-break-before: always;";
+        noteRoot.querySelector("section").style =
+          "display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0; overflow: auto; page-break-before: always;";
         noteRoot.querySelector("footer").style = "display: none";
 
-        new Promise(resolve => 
-          setTimeout(
-            () => {
-              resolve(window.print());
-            }, 
-            500
-          )).then(() => {
-            noteRoot.querySelector("section").removeAttribute("style");
-            noteRoot.querySelector("footer").removeAttribute("style");
+        new Promise(resolve =>
+          setTimeout(() => {
+            resolve(window.print());
+          }, 500)
+        ).then(() => {
+          noteRoot.querySelector("section").removeAttribute("style");
+          noteRoot.querySelector("footer").removeAttribute("style");
         });
       }
     },
@@ -275,10 +272,14 @@ var pageComponents = {
     },
     methods: {
       mountWatcher() {
-        watch(["notes", "shortcuts"], { recursive: true }, async () => {
-          dataStored = false;
-          await this.$store.dispatch("readAssets");
-        });
+        watch(
+          [path.join(cwd, "notes"), path.join(cwd, "shortcuts")],
+          { recursive: true },
+          async () => {
+            dataStored = false;
+            await this.$store.dispatch("readAssets");
+          }
+        );
       }
     },
     async created() {
@@ -325,10 +326,14 @@ var pageComponents = {
     name: "Info",
     methods: {
       mountWatcher() {
-        watch(["notes", "shortcuts"], { recursive: true }, async () => {
-          dataStored = false;
-          await this.$store.dispatch("readAssets");
-        });
+        watch(
+          [path.join(cwd, "notes"), path.join(cwd, "shortcuts")],
+          { recursive: true },
+          async () => {
+            dataStored = false;
+            await this.$store.dispatch("readAssets");
+          }
+        );
       }
     },
     async created() {
@@ -338,7 +343,7 @@ var pageComponents = {
   }
 };
 
-var router = new VueRouter({
+const router = new VueRouter({
   mode: "hash",
   routes: [
     {
