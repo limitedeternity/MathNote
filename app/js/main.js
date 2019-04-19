@@ -1,79 +1,95 @@
+const app = require("electron").remote.app;
 const glob = require("glob");
 const fs = require("fs");
 const path = require("path");
 const watch = require("node-watch");
-const { markdown } = require("markdown");
+const markdown = require("markdown").markdown;
 const firstline = require("firstline");
 
 var dataStored = false;
 var store = new Vuex.Store({
-    state: {
-        noteList: [],
-        shortcutsList: []
-    },
-    getters: {
-        noteList: state => state.noteList,
-        shortcutsList: state => state.shortcutsList
-    },
-    mutations: {
-        async readAssets(state) {
-            if (!dataStored) {
-                let { noteNames } = await new Promise(resolve => {
-                    glob("notes/*.md", (err, notePaths) => {
-                        if (err) throw err;
+  state: {
+    noteList: [],
+    shortcutsList: []
+  },
+  getters: {
+    noteList: state => state.noteList,
+    shortcutsList: state => state.shortcutsList
+  },
+  mutations: {
+    async readAssets(state) {
+      if (!dataStored) {
+        let { noteNames } = await new Promise(resolve => {
+          glob(
+            path.join(app.getAppPath(), "notes", "*.md"),
+            (err, notePaths) => {
+              if (err) throw err;
 
-                        let noteNames = notePaths.map(notePath => path.basename(notePath, path.extname(notePath)));
-                        resolve({ noteNames });
-                    });
-                });
-
-                let { shortcutNames } = await new Promise(resolve => {
-                    glob("shortcuts/*.js", (err, shortcutPaths) => {
-                        if (err) throw err;
-
-                        let shortcutNames = shortcutPaths.map(shortcutPath => path.basename(shortcutPath, path.extname(shortcutPath)));
-                        resolve({ shortcutNames });
-                    });
-                });
-
-                let shortcutsList = [];
-                shortcutNames.forEach(shortcutName => {
-                    shortcutsList.push({
-                        name: shortcutName
-                    });
-                });
-
-                state.shortcutsList = shortcutsList;
-
-                let noteList = [];
-                noteNames.forEach(async noteName => {
-                    let noteDescription = await firstline(`notes/${noteName}.md`, { encoding: 'utf8' });
-
-                    noteList.push({
-                        name: noteName,
-                        description: noteDescription
-                    });
-                });
-
-                state.noteList = noteList;
+              let noteNames = notePaths.map(notePath =>
+                path.basename(notePath, path.extname(notePath))
+              );
+              resolve({ noteNames });
             }
-        }
-    },
-    actions: {
-        readAssets({ commit }) {
-            return new Promise(async resolve => {
-                await commit('readAssets');
-                dataStored = true;
+          );
+        });
 
-                resolve({ finished: true });
-            });
-        }
+        let { shortcutNames } = await new Promise(resolve => {
+          glob(
+            path.join(app.getAppPath(), "shortcuts", "*.js"),
+            (err, shortcutPaths) => {
+              if (err) throw err;
+
+              let shortcutNames = shortcutPaths.map(shortcutPath =>
+                path.basename(shortcutPath, path.extname(shortcutPath))
+              );
+              resolve({ shortcutNames });
+            }
+          );
+        });
+
+        let shortcutsList = [];
+        shortcutNames.forEach(shortcutName => {
+          shortcutsList.push({
+            name: shortcutName
+          });
+        });
+
+        state.shortcutsList = shortcutsList;
+
+        let noteList = [];
+        noteNames.forEach(async noteName => {
+          let noteDescription = await firstline(
+            path.join(app.getAppPath(), "notes", `${noteName}.md`),
+            {
+              encoding: "utf8"
+            }
+          );
+
+          noteList.push({
+            name: noteName,
+            description: noteDescription
+          });
+        });
+
+        state.noteList = noteList;
+      }
     }
+  },
+  actions: {
+    readAssets({ commit }) {
+      return new Promise(async resolve => {
+        await commit("readAssets");
+        dataStored = true;
+
+        resolve({ finished: true });
+      });
+    }
+  }
 });
 
 var pageComponents = {
-    notesComponent: {
-        template: `
+  notesComponent: {
+    template: `
         <div>
           <template v-if="noteList.length > 0">
             <template v-for="(noteObject, index) in noteList">
@@ -101,6 +117,7 @@ var pageComponents = {
                       <div class="content"></div>
                     </section>
                     <footer class="modal-card-foot">
+                      <button class="button" @click="printNote($event)">Print</button>
                       <button class="button is-primary" @click="closeNote($event)">Close</button>
                     </footer>
                   </div>
@@ -131,53 +148,94 @@ var pageComponents = {
           </template>
         </div>
         `,
-        name: 'Notes',
-        computed: {
-            ...Vuex.mapGetters([
-                "noteList",
-                "shortcutsList"
-            ])
-        },
-        methods: {
-            mountWatcher() {
-                watch(['notes', 'shortcuts'], { recursive: true }, async () => {
-                    dataStored = false;
-                    await this.$store.dispatch("readAssets");
-                });
-            },
-            openNote(noteName, event) {
-                let noteContents = fs.readFileSync(`notes/${noteName}.md`, 'utf8').toString('utf8');
-
-                let noteContentsWithMath = noteContents
-                    .replace(/#{([^}]*)}/g, (occurency, shortcutNameMatch) => {
-                        let shortcutName = shortcutNameMatch.trim();
-                        let shortcutExists = Boolean(this.shortcutsList.find(shortcutObj => shortcutObj.name === shortcutName));
-
-                        if (shortcutExists) {
-                            return require(`../shortcuts/${shortcutName}`);
-
-                        } else {
-                            return 'undefined';
-                        }
-                });
-
-                event.currentTarget.parentNode.parentNode.querySelector('.modal').querySelector('.modal-card-body').firstChild.innerHTML = markdown.toHTML(noteContentsWithMath);
-                renderMathInElement(event.currentTarget.parentNode.parentNode.querySelector('.modal').querySelector('.modal-card-body').firstChild);
-
-                event.currentTarget.parentNode.parentNode.querySelector('.modal').classList.add('is-active');
-            },
-            closeNote(event) {
-                event.currentTarget.parentNode.parentNode.parentNode.classList.remove('is-active');
-                event.currentTarget.parentNode.parentNode.querySelector('.modal-card-body').firstChild.innerHTML = "";
-            }
-        },
-        async created() {
-            await this.$store.dispatch("readAssets");
-            this.mountWatcher();
-        }
+    name: "Notes",
+    computed: {
+      ...Vuex.mapGetters(["noteList", "shortcutsList"])
     },
-    shortcutsComponent: {
-        template: `
+    methods: {
+      mountWatcher() {
+        watch(["notes", "shortcuts"], { recursive: true }, async () => {
+          dataStored = false;
+          await this.$store.dispatch("readAssets");
+        });
+      },
+      openNote(noteName, event) {
+        let noteContents = fs
+          .readFileSync(
+            path.join(app.getAppPath(), "notes", `${noteName}.md`),
+            "utf8"
+          )
+          .toString("utf8");
+
+        let noteContentsWithMath = noteContents.replace(
+          /#{([^}]*)}/g,
+          (occurency, shortcutNameMatch) => {
+            let shortcutName = shortcutNameMatch.trim();
+            let shortcutExists = Boolean(
+              this.shortcutsList.find(
+                shortcutObj => shortcutObj.name === shortcutName
+              )
+            );
+
+            if (shortcutExists) {
+              return require(path.join(
+                app.getAppPath(),
+                "shortcuts",
+                `${shortcutName}.js`
+              ));
+            } else {
+              return "undefined";
+            }
+          }
+        );
+
+        event.currentTarget.parentNode.parentNode
+          .querySelector(".modal")
+          .querySelector(
+            ".modal-card-body"
+          ).firstChild.innerHTML = markdown.toHTML(noteContentsWithMath);
+        renderMathInElement(
+          event.currentTarget.parentNode.parentNode
+            .querySelector(".modal")
+            .querySelector(".modal-card-body").firstChild
+        );
+
+        event.currentTarget.parentNode.parentNode
+          .querySelector(".modal")
+          .classList.add("is-active");
+      },
+      closeNote(event) {
+        event.currentTarget.parentNode.parentNode.parentNode.classList.remove(
+          "is-active"
+        );
+        event.currentTarget.parentNode.parentNode.querySelector(
+          ".modal-card-body"
+        ).firstChild.innerHTML = "";
+      },
+      printNote(event) {
+        let noteRoot = event.currentTarget.parentNode.parentNode;
+        noteRoot.querySelector("section").style = "display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0; overflow: auto; page-break-before: always;";
+        noteRoot.querySelector("footer").style = "display: none";
+
+        new Promise(resolve => 
+          setTimeout(
+            () => {
+              resolve(window.print());
+            }, 
+            500
+          )).then(() => {
+            noteRoot.querySelector("section").removeAttribute("style");
+            noteRoot.querySelector("footer").removeAttribute("style");
+        });
+      }
+    },
+    async created() {
+      await this.$store.dispatch("readAssets");
+      this.mountWatcher();
+    }
+  },
+  shortcutsComponent: {
+    template: `
         <div class="card">
           <template v-if="shortcutsList.length > 0">
             <header class="card-header">
@@ -211,27 +269,25 @@ var pageComponents = {
           </template>
         </div>
         `,
-        name: 'Shortcuts',
-        computed: {
-            ...Vuex.mapGetters([
-                "shortcutsList"
-            ])
-        },
-        methods: {
-            mountWatcher() {
-                watch(['notes', 'shortcuts'], { recursive: true }, async () => {
-                    dataStored = false;
-                    await this.$store.dispatch("readAssets");
-                });
-            }
-        },
-        async created() {
-            await this.$store.dispatch("readAssets");
-            this.mountWatcher();
-        }
+    name: "Shortcuts",
+    computed: {
+      ...Vuex.mapGetters(["shortcutsList"])
     },
-    infoComponent: {
-        template: `
+    methods: {
+      mountWatcher() {
+        watch(["notes", "shortcuts"], { recursive: true }, async () => {
+          dataStored = false;
+          await this.$store.dispatch("readAssets");
+        });
+      }
+    },
+    async created() {
+      await this.$store.dispatch("readAssets");
+      this.mountWatcher();
+    }
+  },
+  infoComponent: {
+    template: `
         <div class="card">
           <header class="card-header">
             <p class="card-header-title">
@@ -266,53 +322,61 @@ var pageComponents = {
           </div>
         </div>
         `,
-        name: 'Info',
-        methods: {
-            mountWatcher() {
-                watch(['notes', 'shortcuts'], { recursive: true }, async () => {
-                    dataStored = false;
-                    await this.$store.dispatch("readAssets");
-                });
-            }
-        },
-        async created() {
-            await this.$store.dispatch("readAssets");
-            this.mountWatcher();
-        }
+    name: "Info",
+    methods: {
+      mountWatcher() {
+        watch(["notes", "shortcuts"], { recursive: true }, async () => {
+          dataStored = false;
+          await this.$store.dispatch("readAssets");
+        });
+      }
+    },
+    async created() {
+      await this.$store.dispatch("readAssets");
+      this.mountWatcher();
     }
+  }
 };
 
 var router = new VueRouter({
-    mode: 'hash',
-    routes: [
-        {
-            path: '/',
-            name: 'notes',
-            component: pageComponents.notesComponent
-        },
-        {
-            path: '/shortcuts',
-            name: 'shortcuts',
-            component: pageComponents.shortcutsComponent
-        },
-        {
-            path: '/info',
-            name: 'info',
-            component: pageComponents.infoComponent
-        }
-    ]
+  mode: "hash",
+  routes: [
+    {
+      path: "/",
+      name: "notes",
+      component: pageComponents.notesComponent
+    },
+    {
+      path: "/shortcuts",
+      name: "shortcuts",
+      component: pageComponents.shortcutsComponent
+    },
+    {
+      path: "/info",
+      name: "info",
+      component: pageComponents.infoComponent
+    }
+  ]
 });
 
 router.beforeEach((to, from, next) => {
-    whenDomReady().then(() => {
-        from.name ? document.querySelector(`#${from.name}Link`).parentNode.classList.remove('is-active') : document.querySelector('#notesLink').parentNode.classList.remove('is-active');
-        document.querySelector(`#${to.name}Link`).parentNode.classList.add('is-active');
-        next();
-    });
+  whenDomReady().then(() => {
+    from.name
+      ? document
+          .querySelector(`#${from.name}Link`)
+          .parentNode.classList.remove("is-active")
+      : document
+          .querySelector("#notesLink")
+          .parentNode.classList.remove("is-active");
+    document
+      .querySelector(`#${to.name}Link`)
+      .parentNode.classList.add("is-active");
+    next();
+  });
 });
 
-var app = new Vue({
-    el: "#app",
-    router: router,
-    store: store
+new Vue({
+  el: "#app",
+  router: router,
+  store: store
 });

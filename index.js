@@ -1,52 +1,56 @@
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
-const open = require('open');
-const url = require('url');
+const app = require("electron").app;
+const BrowserWindow = require("electron").BrowserWindow;
+const path = require("path");
+const open = require("open");
+const url = require("url");
 
 let mainWindow = null;
 
 function handleRedirect(event, url) {
-    if (url !== mainWindow.webContents.getURL()) {
-        event.preventDefault();
-        open(url);
-    }
+  if (url !== mainWindow.webContents.getURL()) {
+    event.preventDefault();
+    open(url);
+  }
 }
 
 function createMainWindow() {
-    let win = new BrowserWindow({
-        height: 720,
-        width: 1280,
-        resizable: true,
-        transparent: true
-    });
+  let win = new BrowserWindow({
+    height: 720,
+    width: 1280,
+    resizable: true
+  });
 
-    win.loadURL(url.format({
-        pathname: path.join(__dirname, 'app', 'index.html'),
-        protocol: 'file:',
-        slashes: true
-    }));
+  win.loadURL(
+    url.format({
+      pathname: path.join(app.getAppPath(), "app", "index.html"),
+      protocol: "file:",
+      slashes: true
+    })
+  );
 
-    ['new-window', 'will-navigate'].forEach(eventType => {
-        win.webContents.on(eventType, handleRedirect);
-    });
+  ["new-window", "will-navigate"].forEach(eventType => {
+    win.webContents.on(eventType, handleRedirect);
+  });
 
-    win.on('closed', () => { mainWindow = null });
+  win.on("closed", () => {
+    mainWindow = null;
+  });
 
-    return win;
+  return win;
 }
 
-app.on('window-all-closed', (event) => {
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
+app.on("window-all-closed", event => {
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
 });
 
-app.on('activate', () => {
-    if (!mainWindow) {
-        mainWindow = createMainWindow();
-    }
-});
-
-app.on('ready', () => {
+app.on("activate", () => {
+  if (!mainWindow) {
     mainWindow = createMainWindow();
+  }
+});
+
+app.on("ready", () => {
+  mainWindow = createMainWindow();
 });
