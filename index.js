@@ -17,7 +17,10 @@ function createMainWindow() {
   let win = new BrowserWindow({
     height: 720,
     width: 1280,
-    resizable: true
+    resizable: true,
+    webPreferences: {
+      nodeIntegration: true
+    }
   });
 
   win.loadURL(
